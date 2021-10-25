@@ -4,7 +4,7 @@ build:
 
 .PHONY: vet
 vet:
-	go vet
+	go vet ./...
 
 .PHONY: lint
 lint:
