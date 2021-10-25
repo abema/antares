@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build_and_test:
+    docker:
+    - image: circleci/golang:1.16
+    steps:
+    - checkout
+    - run: go vet ./...
+    - run: go build
+    - run: go test -coverprofile=coverage.txt -covermode=count ./...
+    - run: go install github.com/mattn/goveralls@v0.0.9
+    - run: goveralls -coverprofile=coverage.txt -service=circle-ci
+workflows:
+  version: 2
+  all:
+    jobs:
+    - build_and_test

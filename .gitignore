@@ -1,0 +1,19 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Binary
+antares
+
+# Test binary, built with `go test -c`
+*.test
+
+# Test coverage
+cover.out
+cover.html
+
+# Dependency directories
+vendor/
