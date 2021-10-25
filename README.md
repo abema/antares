@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/abema/antares.svg)](https://pkg.go.dev/github.com/abema/antares)
 [![CircleCI](https://circleci.com/gh/abema/antares.svg?style=svg)](https://circleci.com/gh/abema/antares)
-[![Coverage Status](https://coveralls.io/repos/github/abema/antares/badge.svg?t=BfVpc4)](https://coveralls.io/github/abema/antares)
+[![Coverage Status](https://coveralls.io/repos/github/abema/antares/badge.svg?branch=main)](https://coveralls.io/github/abema/antares?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/abema/antares)](https://goreportcard.com/report/github.com/abema/antares)
 
 Antares is monitoring system for HLS and MPEG-DASH.
