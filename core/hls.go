@@ -128,7 +128,7 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 			removeNilSegments(media)
 			return &Playlists{
 				MediaPlaylists: map[string]*MediaPlaylist{
-					"_": &MediaPlaylist{
+					"_": {
 						URL:           loc,
 						Raw:           data,
 						Time:          time.Now(),
