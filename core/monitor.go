@@ -216,7 +216,7 @@ func (m *monitor) updateSegmentStoreDASH(manifest *Manifest) error {
 }
 
 func (m *monitor) onPanic(r interface{}) {
-	m.onError("panic is occured", thread.PanicToError(r, nil))
+	m.onError("panic is occurred", thread.PanicToError(r, nil))
 }
 
 func (m *monitor) onError(msg string, err error) {
