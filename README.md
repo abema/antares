@@ -113,9 +113,9 @@ config.OnReport = core.MergeOnReportHandlers(
 
 - [x] Live
 - [x] Static
-- [x] Timeline
+- [x] SegmentTimeline
 - [ ] SegmentList
-- [ ] Without Timeline/SegmentList
+- [ ] Only SegmentTemplate (Without SegmentTimeline/SegmentList)
 - [x] Multi-Period
 - [x] Location
 - [ ] Decryption
