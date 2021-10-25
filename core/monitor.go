@@ -222,8 +222,9 @@ func (m *monitor) onPanic(r interface{}) {
 func (m *monitor) onError(msg string, err error) {
 	m.onReport([]*Report{
 		{
-			Name:    "Monitor",
-			Message: msg,
+			Name:     "Monitor",
+			Severity: Error,
+			Message:  msg,
 			Values: Values{
 				"error": err,
 			},
