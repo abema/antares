@@ -73,7 +73,7 @@ func (s *segmentStore) Sync(ctx context.Context, urls []string) error {
 	if maxConc == 0 {
 		maxConc = 1
 	}
-	limiter := make(chan struct{}, s.maxConc)
+	limiter := make(chan struct{}, maxConc)
 	for i := range urls {
 		url := urls[i]
 		if seg, ok := s.cacheMap[url]; ok {
