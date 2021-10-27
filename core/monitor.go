@@ -142,36 +142,45 @@ func (m *monitor) proc() (cont bool, waitDur time.Duration) {
 
 	switch m.config.StreamType {
 	case StreamTypeHLS:
-		return hlsWaitDuration(playlists, m.config.DefaultInterval)
+		return m.hlsWaitDuration(playlists)
 	default:
-		return dashWaitDuration(manifest, m.config.DefaultInterval)
+		return m.dashWaitDuration(manifest)
 	}
 }
 
-func hlsWaitDuration(playlists *Playlists, defaultDuration time.Duration) (bool, time.Duration) {
+func (m *monitor) hlsWaitDuration(playlists *Playlists) (bool, time.Duration) {
 	if playlists.IsVOD() {
-		return false, 0
+		if m.config.TerminateIfVOD {
+			return false, 0
+		}
+		return true, m.config.DefaultInterval
+	}
+	if !m.config.PrioritizeSuggestedInterval {
+		return true, m.config.DefaultInterval
 	}
 	dur := time.Duration(playlists.MaxTargetDuration()) * time.Second / 2
 	if dur == 0 {
-		return true, defaultDuration
+		return true, m.config.DefaultInterval
 	} else if dur < time.Second {
 		return true, time.Second
 	}
 	return true, dur
 }
 
-func dashWaitDuration(manifest *Manifest, defaultDuration time.Duration) (bool, time.Duration) {
+func (m *monitor) dashWaitDuration(manifest *Manifest) (bool, time.Duration) {
 	if manifest.Type == nil || *manifest.Type != "dynamic" {
-		return false, 0
+		if m.config.TerminateIfVOD {
+			return false, 0
+		}
+		return true, m.config.DefaultInterval
 	}
-	if manifest.MinimumUpdatePeriod == nil {
-		return true, defaultDuration
+	if !m.config.PrioritizeSuggestedInterval || manifest.MinimumUpdatePeriod == nil {
+		return true, m.config.DefaultInterval
 	}
 	dur, err := mpd.ParseDuration(*manifest.MinimumUpdatePeriod)
 	if err != nil {
 		log.Printf("ERROR: failed to parse minimumUpdatePeriod: %s: %s", manifest.URL, err)
-		return true, defaultDuration
+		return true, m.config.DefaultInterval
 	} else if dur < time.Second {
 		return true, time.Second
 	}
