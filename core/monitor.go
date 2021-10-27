@@ -150,7 +150,10 @@ func (m *monitor) proc() (cont bool, waitDur time.Duration) {
 
 func (m *monitor) hlsWaitDuration(playlists *Playlists) (bool, time.Duration) {
 	if playlists.IsVOD() {
-		return false, 0
+		if m.config.TerminateIfVOD {
+			return false, 0
+		}
+		return true, m.config.DefaultInterval
 	}
 	if !m.config.PrioritizeSuggestedInterval {
 		return true, m.config.DefaultInterval
@@ -166,7 +169,10 @@ func (m *monitor) hlsWaitDuration(playlists *Playlists) (bool, time.Duration) {
 
 func (m *monitor) dashWaitDuration(manifest *Manifest) (bool, time.Duration) {
 	if manifest.Type == nil || *manifest.Type != "dynamic" {
-		return false, 0
+		if m.config.TerminateIfVOD {
+			return false, 0
+		}
+		return true, m.config.DefaultInterval
 	}
 	if !m.config.PrioritizeSuggestedInterval || manifest.MinimumUpdatePeriod == nil {
 		return true, m.config.DefaultInterval
