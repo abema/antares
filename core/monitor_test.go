@@ -6,8 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafov/m3u8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zencoder/go-dash/helpers/ptrs"
+	"github.com/zencoder/go-dash/mpd"
 )
 
 type mockHLSInspector struct {
@@ -219,4 +222,147 @@ func TestMonitor(t *testing.T) {
 		assert.Equal(t, "OnReport", calls[7])
 		assert.Equal(t, "OnTerminate", calls[8])
 	})
+}
+
+func TestMonitor_HLSWaitDuration(t *testing.T) {
+	livePlaylists := &Playlists{MediaPlaylists: map[string]*MediaPlaylist{
+		"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{
+			TargetDuration: 8.0,
+			Closed:         false,
+		}},
+	}}
+	vodPlaylists := &Playlists{MediaPlaylists: map[string]*MediaPlaylist{
+		"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{
+			TargetDuration: 8.0,
+			Closed:         true,
+		}},
+	}}
+
+	testCases := []struct {
+		name      string
+		playlists *Playlists
+		config    *Config
+		cont      bool
+		dur       time.Duration
+	}{
+		{
+			name:      "live_default",
+			playlists: livePlaylists,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: false,
+			},
+			cont: true,
+			dur:  5 * time.Second,
+		},
+		{
+			name:      "live_suggested",
+			playlists: livePlaylists,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: true,
+			},
+			cont: true,
+			dur:  4 * time.Second,
+		},
+		{
+			name:      "vod_not_terminate",
+			playlists: vodPlaylists,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: true,
+			},
+			cont: true,
+			dur:  5 * time.Second,
+		},
+		{
+			name:      "vod_terminate",
+			playlists: vodPlaylists,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: true,
+				TerminateIfVOD:              true,
+			},
+			cont: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewMonitor(tc.config).(*monitor)
+			cont, dur := m.hlsWaitDuration(tc.playlists)
+			assert.Equal(t, tc.cont, cont)
+			assert.Equal(t, tc.dur, dur)
+		})
+	}
+}
+
+func TestMonitor_DASHWaitDuration(t *testing.T) {
+	liveManifest := &Manifest{
+		MPD: &mpd.MPD{
+			Type:                ptrs.Strptr("dynamic"),
+			MinimumUpdatePeriod: ptrs.Strptr("PT4S"),
+		},
+	}
+	vodManifest := &Manifest{
+		MPD: &mpd.MPD{
+			Type: ptrs.Strptr("static"),
+		},
+	}
+
+	testCases := []struct {
+		name     string
+		manifest *Manifest
+		config   *Config
+		cont     bool
+		dur      time.Duration
+	}{
+		{
+			name:     "live_default",
+			manifest: liveManifest,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: false,
+			},
+			cont: true,
+			dur:  5 * time.Second,
+		},
+		{
+			name:     "live_suggested",
+			manifest: liveManifest,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: true,
+			},
+			cont: true,
+			dur:  4 * time.Second,
+		},
+		{
+			name:     "vod_not_terminate",
+			manifest: vodManifest,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: true,
+			},
+			cont: true,
+			dur:  5 * time.Second,
+		},
+		{
+			name:     "vod_terminate",
+			manifest: vodManifest,
+			config: &Config{
+				DefaultInterval:             5 * time.Second,
+				PrioritizeSuggestedInterval: true,
+				TerminateIfVOD:              true,
+			},
+			cont: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewMonitor(tc.config).(*monitor)
+			cont, dur := m.dashWaitDuration(tc.manifest)
+			assert.Equal(t, tc.cont, cont)
+			assert.Equal(t, tc.dur, dur)
+		})
+	}
 }
