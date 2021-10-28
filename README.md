@@ -115,6 +115,7 @@ config.OnReport = core.MergeOnReportHandlers(
 - [x] Static
 - [x] SegmentTimeline
 - [ ] Open-Ended SegmentTimeline (S@r = -1)
+- [ ] SegmentBase
 - [ ] SegmentList
 - [ ] Only SegmentTemplate (Without SegmentTimeline/SegmentList)
 - [x] Multi-Period
