@@ -98,7 +98,7 @@ func (values Values) String() string {
 		if buf.Len() != 0 {
 			buf.WriteString(" ")
 		}
-		fmt.Fprintf(buf, "%s=[%v]", key, values[key])
+		fmt.Fprintf(buf, "%s=%v", key, values[key])
 	}
 	return string(buf.Bytes())
 }

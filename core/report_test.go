@@ -67,7 +67,7 @@ func TestValues(t *testing.T) {
 		"array":  []string{"foo", "bar"},
 	}
 	assert.Equal(t, []string{"array", "int", "string"}, values.Keys())
-	assert.Equal(t, "array=[[foo bar]] int=[123] string=[abc]", values.String())
+	assert.Equal(t, "array=[foo bar] int=123 string=abc", values.String())
 }
 
 func TestReport(t *testing.T) {

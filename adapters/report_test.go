@@ -102,6 +102,6 @@ func TestFileReportLogger(t *testing.T) {
 	b, err := ioutil.ReadAll(f)
 	require.NoError(t, err)
 	assert.Equal(t, "WARNING: Summary info=1 warn=1 error=0\n"+
-		"WARNING: r2: Report 2: int=[2] string=[bar]\n"+
-		"INFO: r1: Report 1: int=[1] string=[foo]\n", string(b))
+		"WARNING: r2: Report 2: int=2 string=bar\n"+
+		"INFO: r1: Report 1: int=1 string=foo\n", string(b))
 }
