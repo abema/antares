@@ -23,9 +23,9 @@ func TestOnReportFrequencyFilter(t *testing.T) {
 		OnRecover: func(reports core.Reports) {
 			r++
 		},
-		Window:                       5,
-		AlarmIfErrorGreaterThanEqual: 3,
-		RecoverIfErrorLessThanEqual:  1,
+		Window:                        5,
+		AlarmIfErrorGreaterThanEqual:  3,
+		RecoverIfInfoGreaterThanEqual: 4,
 	})
 	handler(core.Reports{{Name: "test", Severity: core.Error}})
 	handler(core.Reports{{Name: "test", Severity: core.Info}})
@@ -36,11 +36,14 @@ func TestOnReportFrequencyFilter(t *testing.T) {
 	require.Equal(t, 0, a)
 	handler(core.Reports{{Name: "test", Severity: core.Error}})
 	require.Equal(t, 1, a)
-	handler(core.Reports{{Name: "test", Severity: core.Error}})
+	handler(core.Reports{{Name: "test", Severity: core.Warn}})
 	handler(core.Reports{{Name: "test", Severity: core.Info}})
 	handler(core.Reports{{Name: "test", Severity: core.Info}})
 	handler(core.Reports{{Name: "test", Severity: core.Info}})
 	require.Equal(t, 0, r)
+	require.Equal(t, 1, a)
+	handler(core.Reports{{Name: "test", Severity: core.Info}})
+	require.Equal(t, 1, r)
 	require.Equal(t, 1, a)
 	handler(core.Reports{{Name: "test", Severity: core.Info}})
 	require.Equal(t, 1, r)

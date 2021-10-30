@@ -87,11 +87,11 @@ And `adapters` package has some useful handlers.
 config.OnReport = core.MergeOnReportHandlers(
 	adapters.ReportLogger(&adapters.ReportLogConfig{JSON: true}, os.Stdout),
 	adapters.Alarm(&adapters.AlarmConfig{
-		OnAlarm                     : func(reports core.Reports) { /* start alarm */ },
-		OnRecover                   : func(reports core.Reports) { /* stop alarm */ },
-		Window                      : 10,
-		AlarmIfErrorGreaterThanEqual: 2,
-		RecoverIfErrorLessThanEqual : 0,
+		OnAlarm                      : func(reports core.Reports) { /* start alarm */ },
+		OnRecover                    : func(reports core.Reports) { /* stop alarm */ },
+		Window                       : 10,
+		AlarmIfErrorGreaterThanEqual : 2,
+		RecoverIfInfoGreaterThanEqual: 10,
 	}),
 	func(reports core.Reports) { /* send metrics */ },
 )
