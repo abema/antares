@@ -11,44 +11,41 @@ import (
 )
 
 type AlarmConfig struct {
-	OnAlarm                      core.OnReportHandler
-	OnRecover                    core.OnReportHandler
-	Window                       int
-	AlarmIfErrorGreaterThanEqual int
-	RecoverIfErrorLessThanEqual  int
+	OnAlarm                       core.OnReportHandler
+	OnRecover                     core.OnReportHandler
+	Window                        int
+	AlarmIfErrorGreaterThanEqual  int
+	RecoverIfInfoGreaterThanEqual int
 }
 
 func Alarm(config *AlarmConfig) core.OnReportHandler {
-	history := make([]bool, 0)
-	var upper bool
-	lower := true
+	history := make([]core.Severity, 0)
+	var alarm bool
 	return func(reports core.Reports) {
-		if reports.WorstSeverity() == core.Error {
-			history = append(history, true)
-		} else {
-			history = append(history, false)
-		}
+		history = append(history, reports.WorstSeverity())
 		if len(history) > config.Window {
 			history = history[1:]
 		}
-		var cnt int
-		for _, val := range history {
-			if val {
-				cnt++
+		var infoCnt int
+		var errCnt int
+		for _, hist := range history {
+			switch hist {
+			case core.Info:
+				infoCnt++
+			case core.Error:
+				errCnt++
 			}
 		}
-		if cnt >= config.AlarmIfErrorGreaterThanEqual {
-			if !upper {
+		if errCnt >= config.AlarmIfErrorGreaterThanEqual {
+			if !alarm {
 				config.OnAlarm(reports)
+				alarm = true
 			}
-			upper = true
-			lower = false
-		} else if cnt <= config.RecoverIfErrorLessThanEqual {
-			if !lower {
+		} else if infoCnt >= config.RecoverIfInfoGreaterThanEqual {
+			if alarm {
 				config.OnRecover(reports)
+				alarm = false
 			}
-			upper = false
-			lower = true
 		}
 	}
 }
