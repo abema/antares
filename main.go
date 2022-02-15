@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -18,9 +21,10 @@ import (
 )
 
 var opts struct {
-	IsHLS  bool
-	IsDASH bool
-	HLS    struct {
+	IntervalMs uint
+	IsHLS      bool
+	IsDASH     bool
+	HLS        struct {
 		PlaylistType string
 		Endlist      bool
 		NoEndlist    bool
@@ -51,12 +55,16 @@ var opts struct {
 		JSON     bool
 		Severity string
 	}
+	HTTP struct {
+		Header string
+	}
 }
 var flagSet *flag.FlagSet
 
 func main() {
 	defaultExportDir := "" + time.Now().Format("export-20060102-150405")
 	flagSet = flag.NewFlagSet("antares", flag.ExitOnError)
+	flagSet.UintVar(&opts.IntervalMs, "interval", 0, "fixed manifest polling interval (milliseconds).")
 	flagSet.BoolVar(&opts.IsHLS, "hls", false, "This flag indicates URL argument is HLS.")
 	flagSet.BoolVar(&opts.IsDASH, "dash", false, "This flag indicates URL argument is DASH.")
 	flagSet.BoolVar(&opts.Export.Enable, "export", false, "Export raw data as local files.")
@@ -80,6 +88,7 @@ func main() {
 	flagSet.UintVar(&opts.Segment.MinBandwidth, "segment.minBandwidth", 0, "min-bandwidth segment filter")
 	flagSet.BoolVar(&opts.Log.JSON, "log.json", false, "JSON log format")
 	flagSet.StringVar(&opts.Log.Severity, "log.severity", "info", "log severity (info|warn|error)")
+	flagSet.StringVar(&opts.HTTP.Header, "http.head", "", "file name of custom request header.")
 	flagSet.Parse(os.Args[1:])
 
 	if len(flagSet.Args()) != 1 {
@@ -91,7 +100,11 @@ func main() {
 	u := flagSet.Args()[0]
 	streamType := getStreamType(u)
 	config := core.NewConfig(u, streamType)
-	config.PrioritizeSuggestedInterval = true
+	if opts.IntervalMs != 0 {
+		config.DefaultInterval = time.Millisecond * time.Duration(opts.IntervalMs)
+	} else {
+		config.PrioritizeSuggestedInterval = true
+	}
 	config.SegmentFilter = segmentFilter()
 	config.TerminateIfVOD = true
 	if opts.Export.Enable {
@@ -107,6 +120,7 @@ func main() {
 	case core.StreamTypeDASH:
 		config.DASH = dashConfig()
 	}
+	config.RequestHeader = buildRequestHeader()
 	m := core.NewMonitor(config)
 
 	sigCh := make(chan os.Signal, 1)
@@ -238,8 +252,7 @@ func buildOnReportHandler() core.OnReportHandler {
 	case "error":
 		severity = core.Error
 	default:
-		println("invalid log severity: ", opts.Log.Severity)
-		os.Exit(1)
+		invalidArguments("invalid log severity: %s", opts.Log.Severity)
 	}
 	return adapters.ReportLogger(&adapters.ReportLogConfig{
 		Flag:     log.LstdFlags,
@@ -247,6 +260,32 @@ func buildOnReportHandler() core.OnReportHandler {
 		JSON:     opts.Log.JSON,
 		Severity: severity,
 	}, os.Stdout)
+}
+
+func buildRequestHeader() http.Header {
+	if opts.HTTP.Header == "" {
+		return http.Header{}
+	}
+	file, err := os.Open(opts.HTTP.Header)
+	if err != nil {
+		invalidArguments("file not found: %s", opts.HTTP.Header)
+	}
+	defer file.Close()
+	r := bufio.NewReader(file)
+	header := make(http.Header)
+	for {
+		line, _, err := r.ReadLine()
+		if err == io.EOF {
+			return header
+		}
+		if err != nil {
+			panic(err)
+		}
+		s := strings.SplitN(string(line), ":", 2)
+		if len(s) == 2 {
+			header.Add(s[0], strings.TrimLeft(s[1], " "))
+		}
+	}
 }
 
 func printUsage() {
@@ -259,6 +298,6 @@ func printUsage() {
 func invalidArguments(format string, args ...interface{}) {
 	println("ERROR: invalid arguments:", fmt.Sprintf(format, args...))
 	println()
-	printUsage()
+	println("HELP: antares -h")
 	os.Exit(1)
 }

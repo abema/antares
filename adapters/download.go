@@ -69,7 +69,7 @@ func (e *localFileExporter) resolvePath(httpFile *core.File) (string, error) {
 	p := path.Join(e.BaseDir, u.Host, u.Path)
 	if !static {
 		ext := path.Ext(p)
-		p = p[:len(p)-len(ext)] + httpFile.RequestTimestamp.Format("-20060102-150405") + ext
+		p = p[:len(p)-len(ext)] + httpFile.RequestTimestamp.Format("-20060102-150405.000") + ext
 	}
 	return p, nil
 }
