@@ -91,25 +91,30 @@ func (ins *speedInspector) Inspect(manifest *core.Manifest, segments core.Segmen
 		}
 	}
 	gap := ins.meter.Gap()
+	values := core.Values{
+		"gap":       gap,
+		"realTime":  ins.meter.RealTimeElapsed(),
+		"videoTime": ins.meter.VideoTimeElapsed(),
+	}
 	if ins.config.Error != 0 && math.Abs(gap) >= ins.config.Error.Seconds() {
 		return &core.Report{
 			Name:     "SpeedInspector",
 			Severity: core.Error,
 			Message:  "large gap between real time and video time",
-			Values:   core.Values{"gap": gap},
+			Values:   values,
 		}
 	} else if ins.config.Warn != 0 && math.Abs(gap) >= ins.config.Warn.Seconds() {
 		return &core.Report{
 			Name:     "SpeedInspector",
 			Severity: core.Warn,
 			Message:  "large gap between real time and video time",
-			Values:   core.Values{"gap": gap},
+			Values:   values,
 		}
 	}
 	return &core.Report{
 		Name:     "SpeedInspector",
 		Severity: core.Info,
 		Message:  "good",
-		Values:   core.Values{"gap": gap},
+		Values:   values,
 	}
 }

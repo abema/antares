@@ -51,6 +51,7 @@ func (ins *speedInspector) Inspect(playlists *core.Playlists, segments core.Segm
 	}
 	var maxGap float64
 	var maxGapURL string
+	var values core.Values
 	for _, media := range playlists.MediaPlaylists {
 		if media.Closed {
 			continue
@@ -96,9 +97,13 @@ func (ins *speedInspector) Inspect(playlists *core.Playlists, segments core.Segm
 		if math.Abs(gap) > math.Abs(maxGap) {
 			maxGap = gap
 			maxGapURL = media.URL
+			values = core.Values{
+				"gap":       gap,
+				"realTime":  meter.RealTimeElapsed(),
+				"videoTime": meter.VideoTimeElapsed(),
+			}
 		}
 	}
-	values := core.Values{"gap": maxGap}
 	if maxGapURL != "" {
 		values["url"] = maxGapURL
 	}

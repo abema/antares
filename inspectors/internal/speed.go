@@ -40,12 +40,23 @@ func (m *Speedometer) Satisfied() bool {
 }
 
 func (m *Speedometer) Gap() float64 {
+	return m.VideoTimeElapsed() - m.RealTimeElapsed()
+}
+
+func (m *Speedometer) RealTimeElapsed() float64 {
 	if len(m.timePoints) < 2 {
 		return 0
 	}
 	old := m.timePoints[0]
 	curr := m.timePoints[len(m.timePoints)-1]
-	realDur := curr.RealTime - old.RealTime
-	videoDur := curr.VideoTime - old.VideoTime
-	return videoDur - realDur
+	return curr.RealTime - old.RealTime
+}
+
+func (m *Speedometer) VideoTimeElapsed() float64 {
+	if len(m.timePoints) < 2 {
+		return 0
+	}
+	old := m.timePoints[0]
+	curr := m.timePoints[len(m.timePoints)-1]
+	return curr.VideoTime - old.VideoTime
 }
