@@ -23,7 +23,7 @@ func TestSpeedInspectorTest(t *testing.T) {
 							{
 								SegmentTemplate: &mpd.SegmentTemplate{
 									Timescale:              ptrs.Int64ptr(90000),
-									PresentationTimeOffset: ptrs.Uint64ptr(0),
+									PresentationTimeOffset: ptrs.Uint64ptr(1100 * 90000),
 									Initialization:         ptrs.Strptr("init.mp4"),
 									Media:                  ptrs.Strptr("$Time$.mp4"),
 									SegmentTimeline: &mpd.SegmentTimeline{

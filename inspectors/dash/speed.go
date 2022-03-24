@@ -63,7 +63,7 @@ func (ins *speedInspector) Inspect(manifest *core.Manifest, segments core.Segmen
 			if segment.SegmentTemplate.Timescale != nil {
 				timescale = float64(*segment.SegmentTemplate.Timescale)
 			}
-			t := segment.Time - offset + segment.Duration
+			t := int64(segment.Time) - int64(offset) + int64(segment.Duration)
 			vt := periodStart + float64(t)/timescale
 			if vt > videoTime {
 				videoTime = vt
