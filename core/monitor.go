@@ -31,7 +31,7 @@ func NewMonitor(config *Config) Monitor {
 	m := &monitor{
 		config:       config,
 		httpClient:   httpClient,
-		segmentStore: newSegmentStore(httpClient, config.SegmentTimeout, config.SegmentMaxConcurrency),
+		segmentStore: newSegmentStore(httpClient, config.SegmentTimeout, config.SegmentBackoff, config.SegmentMaxConcurrency),
 	}
 	manifestClient := httpClient
 	if !config.NoRedirectCache {

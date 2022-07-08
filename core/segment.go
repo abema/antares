@@ -35,10 +35,12 @@ type segmentStore struct {
 	maxConc    int
 }
 
-func newSegmentStore(httpClient client, timeout time.Duration, maxConcurrency int) mutableSegmentStore {
-	backoff := backoff.NewExponentialBackOff()
-	backoff.MaxInterval = 2 * time.Second
-	backoff.MaxElapsedTime = 5 * time.Second
+func newSegmentStore(
+	httpClient client,
+	timeout time.Duration,
+	backoff backoff.BackOff,
+	maxConcurrency int,
+) mutableSegmentStore {
 	return &segmentStore{
 		httpClient: httpClient,
 		backoff:    backoff,

@@ -42,6 +42,7 @@ type Config struct {
 	ManifestTimeout             time.Duration
 	ManifestBackoff             backoff.BackOff
 	SegmentTimeout              time.Duration
+	SegmentBackoff              backoff.BackOff
 	SegmentMaxConcurrency       int
 	SegmentFilter               SegmentFilter
 	StreamType                  StreamType
@@ -58,14 +59,15 @@ type Config struct {
 func NewConfig(url string, streamType StreamType) *Config {
 	backoff := backoff.NewExponentialBackOff()
 	backoff.MaxInterval = 2 * time.Second
-	backoff.MaxElapsedTime = 5 * time.Second
+	backoff.MaxElapsedTime = 10 * time.Second
 	config := &Config{
 		URL:                   url,
 		DefaultInterval:       5 * time.Second,
 		HTTPClient:            http.DefaultClient,
-		ManifestTimeout:       3 * time.Second,
+		ManifestTimeout:       1 * time.Second,
 		ManifestBackoff:       backoff,
-		SegmentTimeout:        5 * time.Second,
+		SegmentTimeout:        3 * time.Second,
+		SegmentBackoff:        backoff,
 		SegmentMaxConcurrency: 4,
 		StreamType:            streamType,
 	}
