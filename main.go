@@ -202,6 +202,7 @@ func hlsConfig() *core.HLSConfig {
 func dashConfig() *core.DASHConfig {
 	inspectors := []core.DASHInspector{
 		dash.NewSpeedInspector(),
+		dash.NewPresentationDelayInspector(),
 	}
 	if opts.DASH.MandatoryMimeTypes != "" || opts.DASH.ValidMimeTypes != "" {
 		inspectors = append(inspectors, dash.NewAdaptationSetInspector(&dash.AdaptationSetInspectorConfig{
