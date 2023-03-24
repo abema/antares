@@ -50,24 +50,25 @@ func (ins *speedInspector) Inspect(manifest *core.Manifest, segments core.Segmen
 	}
 	var videoTime float64
 	err := manifest.EachSegments(func(segment *core.DASHSegment) (cont bool) {
-		if !segment.Initialization {
-			var periodStart float64
-			if segment.Period.Start != nil {
-				periodStart = time.Duration(*segment.Period.Start).Seconds()
-			}
-			var offset uint64
-			if segment.SegmentTemplate.PresentationTimeOffset != nil {
-				offset = *segment.SegmentTemplate.PresentationTimeOffset
-			}
-			timescale := float64(1)
-			if segment.SegmentTemplate.Timescale != nil {
-				timescale = float64(*segment.SegmentTemplate.Timescale)
-			}
-			t := int64(segment.Time) - int64(offset) + int64(segment.Duration)
-			vt := periodStart + float64(t)/timescale
-			if vt > videoTime {
-				videoTime = vt
-			}
+		if segment.Initialization {
+			return true
+		}
+		var periodStart float64
+		if segment.Period.Start != nil {
+			periodStart = time.Duration(*segment.Period.Start).Seconds()
+		}
+		var offset uint64
+		if segment.SegmentTemplate.PresentationTimeOffset != nil {
+			offset = *segment.SegmentTemplate.PresentationTimeOffset
+		}
+		timescale := float64(1)
+		if segment.SegmentTemplate.Timescale != nil {
+			timescale = float64(*segment.SegmentTemplate.Timescale)
+		}
+		t := int64(segment.Time) - int64(offset) + int64(segment.Duration)
+		vt := periodStart + float64(t)/timescale
+		if vt > videoTime {
+			videoTime = vt
 		}
 		return true
 	})
