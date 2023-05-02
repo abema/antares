@@ -42,8 +42,16 @@ func (m *Manifest) EachSegments(handle func(*DASHSegment) (cont bool)) error {
 		return err
 	}
 	for _, period := range m.Periods {
+		baseURL := baseURL
+		if period.BaseURL != "" {
+			baseURL, err = url.ResolveReference(baseURL, period.BaseURL)
+		}
 		for _, as := range period.AdaptationSets {
 			for _, rep := range as.Representations {
+				baseURL := baseURL
+				if rep.BaseURL != nil {
+					baseURL, err = url.ResolveReference(baseURL, *rep.BaseURL)
+				}
 				if as.SegmentTemplate != nil {
 					cont, err := visitSegmentsBySegmentTimeline(baseURL, as.SegmentTemplate, period, as, rep, handle)
 					if err != nil || !cont {
