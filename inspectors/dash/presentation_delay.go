@@ -7,8 +7,10 @@ import (
 )
 
 type PresentationDelayInspectorConfig struct {
-	Warn  time.Duration
-	Error time.Duration
+	Warn                  time.Duration
+	Error                 time.Duration
+	IgnoreEarliestSegment bool
+	IgnoreLatestSegment   bool
 }
 
 func DefaultPresentationDelayInspectorConfig() *PresentationDelayInspectorConfig {
@@ -138,34 +140,38 @@ func (ins *PresentationDelayInspector) Inspect(manifest *core.Manifest, segments
 	}
 	earliestRenderTime := earliestVideoTime.Add(suggestedPresentationDelay)
 	latestRenderTime := latestVideoTime.Add(suggestedPresentationDelay)
-	if earliestRenderTime.Add(ins.config.Error).After(wallClock) {
-		return &core.Report{
-			Name:     "PresentationDelayInspector",
-			Severity: core.Error,
-			Message:  "earliest segment is out of suggested time range",
-			Values:   values,
-		}
-	} else if earliestRenderTime.Add(ins.config.Warn).After(wallClock) {
-		return &core.Report{
-			Name:     "PresentationDelayInspector",
-			Severity: core.Warn,
-			Message:  "earliest segment is out of suggested time range",
-			Values:   values,
+	if !ins.config.IgnoreEarliestSegment {
+		if earliestRenderTime.Add(ins.config.Error).After(wallClock) {
+			return &core.Report{
+				Name:     "PresentationDelayInspector",
+				Severity: core.Error,
+				Message:  "earliest segment is out of suggested time range",
+				Values:   values,
+			}
+		} else if earliestRenderTime.Add(ins.config.Warn).After(wallClock) {
+			return &core.Report{
+				Name:     "PresentationDelayInspector",
+				Severity: core.Warn,
+				Message:  "earliest segment is out of suggested time range",
+				Values:   values,
+			}
 		}
 	}
-	if latestRenderTime.Add(-ins.config.Error).Before(wallClock) {
-		return &core.Report{
-			Name:     "PresentationDelayInspector",
-			Severity: core.Error,
-			Message:  "latest segment is out of suggested time range",
-			Values:   values,
-		}
-	} else if latestRenderTime.Add(-ins.config.Warn).Before(wallClock) {
-		return &core.Report{
-			Name:     "PresentationDelayInspector",
-			Severity: core.Warn,
-			Message:  "latest segment is out of suggested time range",
-			Values:   values,
+	if !ins.config.IgnoreLatestSegment {
+		if latestRenderTime.Add(-ins.config.Error).Before(wallClock) {
+			return &core.Report{
+				Name:     "PresentationDelayInspector",
+				Severity: core.Error,
+				Message:  "latest segment is out of suggested time range",
+				Values:   values,
+			}
+		} else if latestRenderTime.Add(-ins.config.Warn).Before(wallClock) {
+			return &core.Report{
+				Name:     "PresentationDelayInspector",
+				Severity: core.Warn,
+				Message:  "latest segment is out of suggested time range",
+				Values:   values,
+			}
 		}
 	}
 	return &core.Report{
