@@ -22,6 +22,7 @@ import (
 
 var opts struct {
 	IntervalMs uint
+	MaxSeconds float64
 	IsHLS      bool
 	IsDASH     bool
 	HLS        struct {
@@ -65,6 +66,7 @@ func main() {
 	defaultExportDir := "" + time.Now().Format("export-20060102-150405")
 	flagSet = flag.NewFlagSet("antares", flag.ExitOnError)
 	flagSet.UintVar(&opts.IntervalMs, "interval", 0, "fixed manifest polling interval (milliseconds).")
+	flagSet.Float64Var(&opts.MaxSeconds, "maxSeconds", 0, "maximum seconds to monitor.")
 	flagSet.BoolVar(&opts.IsHLS, "hls", false, "This flag indicates URL argument is HLS.")
 	flagSet.BoolVar(&opts.IsDASH, "dash", false, "This flag indicates URL argument is DASH.")
 	flagSet.BoolVar(&opts.Export.Enable, "export", false, "Export raw data as local files.")
@@ -123,9 +125,16 @@ func main() {
 	config.RequestHeader = buildRequestHeader()
 	m := core.NewMonitor(config)
 
+	var timeout <-chan time.Time
+	if opts.MaxSeconds != 0 {
+		timeout = time.After(time.Second * time.Duration(opts.MaxSeconds))
+	}
+
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	select {
+	case <-timeout:
+		log.Print("reached maxSeconds")
 	case <-terminated:
 	case sig := <-sigCh:
 		log.Print("SIGNAL:", sig)
