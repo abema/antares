@@ -4,18 +4,20 @@ import (
 	"testing"
 
 	"github.com/abema/antares/core"
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 	"github.com/stretchr/testify/require"
 )
 
 func TestVariantsSyncInspector(t *testing.T) {
-	segments := func(begin, end int, dur float64) []*m3u8.MediaSegment {
-		segments := make([]*m3u8.MediaSegment, 0)
+	segments := func(begin, end int, dur float64) []*m3u8.Segment {
+		segments := make([]*m3u8.Segment, 0)
 		for i := begin; i < end; i++ {
-			segments = append(segments, &m3u8.MediaSegment{
-				SeqId:    uint64(i),
-				Duration: dur,
-			})
+			segment := &m3u8.Segment{
+				Tags:     m3u8.SegmentTags{},
+				Sequence: int64(i),
+			}
+			segment.Tags.SetExtInfValue(dur, 64)
+			segments = append(segments, segment)
 		}
 		return segments
 	}

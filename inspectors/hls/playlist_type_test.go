@@ -4,11 +4,16 @@ import (
 	"testing"
 
 	"github.com/abema/antares/core"
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPlaylistTypeInspector(t *testing.T) {
+	eventTypeTags := m3u8.MediaPlaylistTags{}
+	eventTypeTags.SetPlaylistType(m3u8.MediaPlaylistTypeEvent)
+	vodTypeTags := m3u8.MediaPlaylistTags{}
+	vodTypeTags.SetPlaylistType(m3u8.MediaPlaylistTypeVOD)
+
 	testCases := []struct {
 		name                  string
 		playlistTypeCondition PlaylistTypeCondition
@@ -21,8 +26,8 @@ func TestPlaylistTypeInspector(t *testing.T) {
 			playlistTypeCondition: PlaylistTypeMustOmitted,
 			endlistCondition:      EndlistMustNotExist,
 			mediaPlaylists: map[string]*core.MediaPlaylist{
-				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: 0, Closed: false}},
-				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: 0, Closed: false}},
+				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{EndList: false}},
+				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{EndList: false}},
 			},
 			severity: core.Info,
 		},
@@ -31,8 +36,8 @@ func TestPlaylistTypeInspector(t *testing.T) {
 			playlistTypeCondition: PlaylistTypeMustOmitted,
 			endlistCondition:      EndlistMustNotExist,
 			mediaPlaylists: map[string]*core.MediaPlaylist{
-				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: 0, Closed: false}},
-				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: 0, Closed: true}},
+				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{EndList: false}},
+				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{EndList: true}},
 			},
 			severity: core.Error,
 		},
@@ -41,8 +46,8 @@ func TestPlaylistTypeInspector(t *testing.T) {
 			playlistTypeCondition: PlaylistTypeMustOmitted,
 			endlistCondition:      EndlistMustNotExist,
 			mediaPlaylists: map[string]*core.MediaPlaylist{
-				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.EVENT, Closed: false}},
-				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: 0, Closed: false}},
+				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: eventTypeTags, EndList: false}},
+				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{EndList: false}},
 			},
 			severity: core.Error,
 		},
@@ -51,8 +56,8 @@ func TestPlaylistTypeInspector(t *testing.T) {
 			playlistTypeCondition: PlaylistTypeMustVOD,
 			endlistCondition:      EndlistMustExist,
 			mediaPlaylists: map[string]*core.MediaPlaylist{
-				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.VOD, Closed: true}},
-				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.VOD, Closed: true}},
+				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: vodTypeTags, EndList: true}},
+				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: vodTypeTags, EndList: true}},
 			},
 			severity: core.Info,
 		},
@@ -61,8 +66,8 @@ func TestPlaylistTypeInspector(t *testing.T) {
 			playlistTypeCondition: PlaylistTypeMustVOD,
 			endlistCondition:      EndlistMustExist,
 			mediaPlaylists: map[string]*core.MediaPlaylist{
-				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.VOD, Closed: true}},
-				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.VOD, Closed: false}},
+				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: vodTypeTags, EndList: true}},
+				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: vodTypeTags, EndList: false}},
 			},
 			severity: core.Error,
 		},
@@ -71,8 +76,8 @@ func TestPlaylistTypeInspector(t *testing.T) {
 			playlistTypeCondition: PlaylistTypeMustVOD,
 			endlistCondition:      EndlistAny,
 			mediaPlaylists: map[string]*core.MediaPlaylist{
-				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.VOD, Closed: true}},
-				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{MediaType: m3u8.VOD, Closed: false}},
+				"0.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: vodTypeTags, EndList: true}},
+				"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{Tags: vodTypeTags, EndList: false}},
 			},
 			severity: core.Info,
 		},

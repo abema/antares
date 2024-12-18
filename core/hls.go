@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/abema/antares/internal/thread"
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -25,8 +25,8 @@ type MediaPlaylist struct {
 	Raw  []byte
 	Time time.Time
 	*m3u8.MediaPlaylist
-	VariantParams *m3u8.VariantParams
-	Alternative   *m3u8.Alternative
+	StreamInfAttrs m3u8.StreamInfAttrs
+	MediaAttrs     m3u8.MediaAttrs
 }
 
 func (p *MediaPlaylist) SegmentURLs() ([]string, error) {
@@ -52,12 +52,12 @@ type Playlists struct {
 
 type HLSSegment struct {
 	URL string
-	// VariantParams is reference to related VariantParams object in MasterPlaylist.
+	// StreamInfAttrs is reference to related StreamInfAttrs object in MasterPlaylist.
 	// This property is nullable.
-	VariantParams *m3u8.VariantParams
-	// Alternative is reference to related Alternative object in MasterPlaylist.
+	StreamInfAttrs m3u8.StreamInfAttrs
+	// MediaAttrs is reference to related MediaAttrs object in MasterPlaylist.
 	// This property is nullable.
-	Alternative *m3u8.Alternative
+	MediaAttrs m3u8.MediaAttrs
 }
 
 func (p *Playlists) Segments() ([]*HLSSegment, error) {
@@ -69,9 +69,9 @@ func (p *Playlists) Segments() ([]*HLSSegment, error) {
 		}
 		for _, u := range urls {
 			segments = append(segments, &HLSSegment{
-				URL:           u,
-				VariantParams: playlist.VariantParams,
-				Alternative:   playlist.Alternative,
+				URL:            u,
+				StreamInfAttrs: playlist.StreamInfAttrs,
+				MediaAttrs:     playlist.MediaAttrs,
 			})
 		}
 	}
@@ -80,7 +80,7 @@ func (p *Playlists) Segments() ([]*HLSSegment, error) {
 
 func (p *Playlists) IsVOD() bool {
 	for _, playlist := range p.MediaPlaylists {
-		if !playlist.Closed {
+		if !playlist.EndList {
 			return false
 		}
 	}
@@ -90,8 +90,9 @@ func (p *Playlists) IsVOD() bool {
 func (p *Playlists) MaxTargetDuration() float64 {
 	var dur float64
 	for _, playlist := range p.MediaPlaylists {
-		if playlist.TargetDuration > dur {
-			dur = playlist.TargetDuration
+		d := float64(playlist.Tags.TargetDuration())
+		if d > dur {
+			dur = d
 		}
 	}
 	return dur
@@ -119,12 +120,12 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 		if err != nil {
 			return nil, fmt.Errorf("failed to download playlist: %s: %w", u, err)
 		}
-		dec, ptype, err := m3u8.DecodeFrom(bytes.NewReader(data), true)
+		dec, err := m3u8.DecodePlaylist(bytes.NewReader(data))
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode playlist: %s: %w", u, err)
 		}
-		if ptype == m3u8.MEDIA {
-			media := dec.(*m3u8.MediaPlaylist)
+		if dec.Type() == m3u8.PlaylistTypeMedia {
+			media := dec.Media()
 			removeNilSegments(media)
 			return &Playlists{
 				MediaPlaylists: map[string]*MediaPlaylist{
@@ -137,7 +138,7 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 				},
 			}, nil
 		}
-		master := dec.(*m3u8.MasterPlaylist)
+		master := dec.Master()
 		d.masterPlaylist = &MasterPlaylist{
 			URL:            loc,
 			Raw:            data,
@@ -156,10 +157,10 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 	}
 	var mutex sync.Mutex
 	eg := new(errgroup.Group)
-	for vi := range d.masterPlaylist.Variants {
-		variant := d.masterPlaylist.Variants[vi]
+	for vi := range d.masterPlaylist.Streams {
+		variant := d.masterPlaylist.Streams[vi]
 		eg.Go(thread.NoPanic(func() error {
-			mediaPlaylist, err := d.downloadMediaPlaylist(ctx, base, variant.URI, &variant.VariantParams, nil)
+			mediaPlaylist, err := d.downloadMediaPlaylist(ctx, base, variant.URI, variant.Attributes, nil)
 			if err != nil {
 				return err
 			}
@@ -168,22 +169,35 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 			playlists.MediaPlaylists[variant.URI] = mediaPlaylist
 			return nil
 		}))
-		for ai := range variant.Alternatives {
-			alt := variant.Alternatives[ai]
-			if _, exists := playlists.MediaPlaylists[alt.URI]; exists {
-				continue
-			}
-			eg.Go(thread.NoPanic(func() error {
-				mediaPlaylist, err := d.downloadMediaPlaylist(ctx, base, alt.URI, nil, alt)
-				if err != nil {
-					return err
-				}
-				mutex.Lock()
-				defer mutex.Unlock()
-				playlists.MediaPlaylists[alt.URI] = mediaPlaylist
-				return nil
-			}))
+	}
+	var alternatives []m3u8.MediaAttrs
+	for _, alts := range d.masterPlaylist.Alternatives.Video {
+		for _, alt := range alts {
+			alternatives = append(alternatives, alt.Attributes)
 		}
+	}
+	for _, alts := range d.masterPlaylist.Alternatives.Audio {
+		for _, alt := range alts {
+			alternatives = append(alternatives, alt.Attributes)
+		}
+	}
+	for _, alts := range d.masterPlaylist.Alternatives.Subtitles {
+		for _, alt := range alts {
+			alternatives = append(alternatives, alt.Attributes)
+		}
+	}
+	for _, alt := range alternatives {
+		eg.Go(thread.NoPanic(func() error {
+			uri := alt.URI()
+			mediaPlaylist, err := d.downloadMediaPlaylist(ctx, base, uri, nil, alt)
+			if err != nil {
+				return err
+			}
+			mutex.Lock()
+			defer mutex.Unlock()
+			playlists.MediaPlaylists[uri] = mediaPlaylist
+			return nil
+		}))
 	}
 	if err := eg.Wait(); err != nil {
 		return nil, err
@@ -195,8 +209,8 @@ func (d *hlsPlaylistDownloader) downloadMediaPlaylist(
 	ctx context.Context,
 	base *url.URL,
 	u string,
-	variantParams *m3u8.VariantParams,
-	alt *m3u8.Alternative,
+	variantParams m3u8.StreamInfAttrs,
+	alt m3u8.MediaAttrs,
 ) (*MediaPlaylist, error) {
 	absolute, err := base.Parse(u)
 	if err != nil {
@@ -206,24 +220,24 @@ func (d *hlsPlaylistDownloader) downloadMediaPlaylist(
 	if err != nil {
 		return nil, fmt.Errorf("failed to download media playlist: %s: %w", u, err)
 	}
-	dec, _, err := m3u8.DecodeFrom(bytes.NewReader(data), true)
+	dec, err := m3u8.DecodePlaylist(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode media playlist: %s: %w", u, err)
 	}
-	media := dec.(*m3u8.MediaPlaylist)
+	media := dec.Media()
 	removeNilSegments(media)
 	return &MediaPlaylist{
-		URL:           loc,
-		Raw:           data,
-		Time:          time.Now(),
-		MediaPlaylist: media,
-		VariantParams: variantParams,
-		Alternative:   alt,
+		URL:            loc,
+		Raw:            data,
+		Time:           time.Now(),
+		MediaPlaylist:  media,
+		StreamInfAttrs: variantParams,
+		MediaAttrs:     alt,
 	}, nil
 }
 
-// removeNilSegments removes nil elements, because grafov/m3u8 returns nil-filled large slice.
-// https://github.com/grafov/m3u8/issues/97
+// removeNilSegments removes nil elements, because abema/go-simple-m3u8 returns nil-filled large slice.
+// https://github.com/abema/go-simple-m3u8/issues/97
 func removeNilSegments(media *m3u8.MediaPlaylist) {
 	for i := range media.Segments {
 		if media.Segments[i] == nil {

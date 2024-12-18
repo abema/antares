@@ -5,18 +5,20 @@ import (
 	"time"
 
 	"github.com/abema/antares/core"
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSpeedInspectorTest(t *testing.T) {
-	segments := func(begin int) []*m3u8.MediaSegment {
-		segments := make([]*m3u8.MediaSegment, 0)
+	segments := func(begin int) []*m3u8.Segment {
+		segments := make([]*m3u8.Segment, 0)
 		for i := begin; i < begin+10; i++ {
-			segments = append(segments, &m3u8.MediaSegment{
-				SeqId:    uint64(i),
-				Duration: 10.0,
-			})
+			segment := &m3u8.Segment{
+				Tags:     m3u8.SegmentTags{},
+				Sequence: int64(i),
+			}
+			segment.Tags.SetExtInfValue(10.0, 64)
+			segments = append(segments, segment)
 		}
 		return segments
 	}
@@ -186,7 +188,7 @@ func TestSpeedInspectorTest(t *testing.T) {
 			"0.m3u8": {
 				URL:           "https://foo/0.m3u8",
 				Time:          time.Unix(1280, 0),
-				MediaPlaylist: &m3u8.MediaPlaylist{Segments: nil, Closed: true},
+				MediaPlaylist: &m3u8.MediaPlaylist{Segments: nil, EndList: true},
 			},
 			"1.m3u8": {
 				URL:           "https://foo/1.m3u8",
@@ -203,12 +205,12 @@ func TestSpeedInspectorTest(t *testing.T) {
 			"0.m3u8": {
 				URL:           "https://foo/0.m3u8",
 				Time:          time.Unix(1280, 0),
-				MediaPlaylist: &m3u8.MediaPlaylist{Segments: nil, Closed: true},
+				MediaPlaylist: &m3u8.MediaPlaylist{Segments: nil, EndList: true},
 			},
 			"1.m3u8": {
 				URL:           "https://foo/1.m3u8",
 				Time:          time.Unix(1280, 0),
-				MediaPlaylist: &m3u8.MediaPlaylist{Segments: nil, Closed: true},
+				MediaPlaylist: &m3u8.MediaPlaylist{Segments: nil, EndList: true},
 			},
 		},
 	}, nil)

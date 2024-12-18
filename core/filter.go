@@ -99,12 +99,14 @@ func MaxBandwidthSegmentFilter(bandwidth int64) SegmentFilter {
 }
 
 func (f *maxBandwidthSegmentFilter) CheckHLS(segment *HLSSegment) FilterResult {
-	if segment.VariantParams != nil &&
-		int64(segment.VariantParams.Bandwidth) <= f.bandwidth {
-		return Pass
-	} else {
+	if segment.StreamInfAttrs == nil {
 		return Reject
 	}
+	bandwidth, err := segment.StreamInfAttrs.Bandwidth()
+	if err != nil || bandwidth > f.bandwidth {
+		return Reject
+	}
+	return Pass
 }
 
 func (f *maxBandwidthSegmentFilter) CheckDASH(segment *DASHSegment) FilterResult {
@@ -128,12 +130,14 @@ func MinBandwidthSegmentFilter(bandwidth int64) SegmentFilter {
 }
 
 func (f *minBandwidthSegmentFilter) CheckHLS(segment *HLSSegment) FilterResult {
-	if segment.VariantParams != nil &&
-		int64(segment.VariantParams.Bandwidth) >= f.bandwidth {
-		return Pass
-	} else {
+	if segment.StreamInfAttrs == nil {
 		return Reject
 	}
+	bandwidth, err := segment.StreamInfAttrs.Bandwidth()
+	if err != nil || bandwidth < f.bandwidth {
+		return Reject
+	}
+	return Pass
 }
 
 func (f *minBandwidthSegmentFilter) CheckDASH(segment *DASHSegment) FilterResult {

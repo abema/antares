@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zencoder/go-dash/helpers/ptrs"
@@ -227,14 +227,14 @@ func TestMonitor(t *testing.T) {
 func TestMonitor_HLSWaitDuration(t *testing.T) {
 	livePlaylists := &Playlists{MediaPlaylists: map[string]*MediaPlaylist{
 		"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{
-			TargetDuration: 8.0,
-			Closed:         false,
+			Tags:    m3u8.MediaPlaylistTags{m3u8.TagExtXTargetDuration: []string{"8"}},
+			EndList: false,
 		}},
 	}}
 	vodPlaylists := &Playlists{MediaPlaylists: map[string]*MediaPlaylist{
 		"1.m3u8": {MediaPlaylist: &m3u8.MediaPlaylist{
-			TargetDuration: 8.0,
-			Closed:         true,
+			Tags:    m3u8.MediaPlaylistTags{m3u8.TagExtXTargetDuration: []string{"8"}},
+			EndList: true,
 		}},
 	}}
 

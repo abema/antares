@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,21 +17,21 @@ func TestSegmentURLs(t *testing.T) {
 		MediaPlaylists: map[string]*MediaPlaylist{
 			"media_0.m3u8": {
 				URL: "https://localhost/foo/media_0.m3u8",
-				MediaPlaylist: &m3u8.MediaPlaylist{Segments: []*m3u8.MediaSegment{
+				MediaPlaylist: &m3u8.MediaPlaylist{Segments: []*m3u8.Segment{
 					{URI: "segment_0_0.ts"},
 					{URI: "segment_0_1.ts"},
 				}},
-				VariantParams: &m3u8.VariantParams{Bandwidth: uint32(2000000)},
-				Alternative:   &m3u8.Alternative{Name: "audio_0"},
+				StreamInfAttrs: m3u8.StreamInfAttrs{"BANDWIDTH": "2000000"},
+				MediaAttrs:     m3u8.MediaAttrs{"NAME": "audio_0"},
 			},
 			"media_1.m3u8": {
 				URL: "https://localhost/foo/media_1.m3u8",
-				MediaPlaylist: &m3u8.MediaPlaylist{Segments: []*m3u8.MediaSegment{
+				MediaPlaylist: &m3u8.MediaPlaylist{Segments: []*m3u8.Segment{
 					{URI: "segment_1_0.ts"},
 					{URI: "segment_1_1.ts"},
 				}},
-				VariantParams: &m3u8.VariantParams{Bandwidth: uint32(1000000)},
-				Alternative:   &m3u8.Alternative{Name: "audio_1"},
+				StreamInfAttrs: m3u8.StreamInfAttrs{"BANDWIDTH": "1000000"},
+				MediaAttrs:     m3u8.MediaAttrs{"NAME": "audio_1"},
 			},
 		},
 	}
@@ -45,10 +45,10 @@ func TestSegmentURLs(t *testing.T) {
 	require.Equal(t, "https://localhost/foo/segment_0_1.ts", segments[1].URL)
 	require.Equal(t, "https://localhost/foo/segment_1_0.ts", segments[2].URL)
 	require.Equal(t, "https://localhost/foo/segment_1_1.ts", segments[3].URL)
-	require.Equal(t, uint32(2000000), segments[0].VariantParams.Bandwidth)
-	require.Equal(t, "audio_0", segments[0].Alternative.Name)
-	require.Equal(t, uint32(1000000), segments[2].VariantParams.Bandwidth)
-	require.Equal(t, "audio_1", segments[2].Alternative.Name)
+	require.Equal(t, "2000000", segments[0].StreamInfAttrs["BANDWIDTH"])
+	require.Equal(t, "audio_0", segments[0].MediaAttrs.Name())
+	require.Equal(t, "1000000", segments[2].StreamInfAttrs["BANDWIDTH"])
+	require.Equal(t, "audio_1", segments[2].MediaAttrs.Name())
 }
 
 func TestIsVOD(t *testing.T) {
@@ -56,10 +56,10 @@ func TestIsVOD(t *testing.T) {
 		p := &Playlists{
 			MediaPlaylists: map[string]*MediaPlaylist{
 				"media_0.m3u8": {
-					MediaPlaylist: &m3u8.MediaPlaylist{Closed: false},
+					MediaPlaylist: &m3u8.MediaPlaylist{EndList: false},
 				},
 				"media_1.m3u8": {
-					MediaPlaylist: &m3u8.MediaPlaylist{Closed: false},
+					MediaPlaylist: &m3u8.MediaPlaylist{EndList: false},
 				},
 			},
 		}
@@ -70,10 +70,10 @@ func TestIsVOD(t *testing.T) {
 		p := &Playlists{
 			MediaPlaylists: map[string]*MediaPlaylist{
 				"media_0.m3u8": {
-					MediaPlaylist: &m3u8.MediaPlaylist{Closed: false},
+					MediaPlaylist: &m3u8.MediaPlaylist{EndList: false},
 				},
 				"media_1.m3u8": {
-					MediaPlaylist: &m3u8.MediaPlaylist{Closed: true},
+					MediaPlaylist: &m3u8.MediaPlaylist{EndList: true},
 				},
 			},
 		}
@@ -84,10 +84,10 @@ func TestIsVOD(t *testing.T) {
 		p := &Playlists{
 			MediaPlaylists: map[string]*MediaPlaylist{
 				"media_0.m3u8": {
-					MediaPlaylist: &m3u8.MediaPlaylist{Closed: true},
+					MediaPlaylist: &m3u8.MediaPlaylist{EndList: true},
 				},
 				"media_1.m3u8": {
-					MediaPlaylist: &m3u8.MediaPlaylist{Closed: true},
+					MediaPlaylist: &m3u8.MediaPlaylist{EndList: true},
 				},
 			},
 		}
@@ -99,10 +99,14 @@ func TestMaxTargetDuration(t *testing.T) {
 	p := &Playlists{
 		MediaPlaylists: map[string]*MediaPlaylist{
 			"media_0.m3u8": {
-				MediaPlaylist: &m3u8.MediaPlaylist{TargetDuration: 6.0},
+				MediaPlaylist: &m3u8.MediaPlaylist{
+					Tags: m3u8.MediaPlaylistTags{m3u8.TagExtXTargetDuration: []string{"6"}},
+				},
 			},
 			"media_1.m3u8": {
-				MediaPlaylist: &m3u8.MediaPlaylist{TargetDuration: 5.0},
+				MediaPlaylist: &m3u8.MediaPlaylist{
+					Tags: m3u8.MediaPlaylistTags{m3u8.TagExtXTargetDuration: []string{"5"}},
+				},
 			},
 		},
 	}
@@ -161,9 +165,9 @@ func TestHLSPlaylistDownloader(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, server.URL+"/master.m3u8", playlists.MasterPlaylist.URL)
 		require.Equal(t, master, playlists.MasterPlaylist.Raw)
-		require.Len(t, playlists.MasterPlaylist.Variants, 2)
-		require.Equal(t, "media_0.m3u8", playlists.MasterPlaylist.Variants[0].URI)
-		require.Equal(t, "media_1.m3u8", playlists.MasterPlaylist.Variants[1].URI)
+		require.Len(t, playlists.MasterPlaylist.Streams, 2)
+		require.Equal(t, "media_0.m3u8", playlists.MasterPlaylist.Streams[0].URI)
+		require.Equal(t, "media_1.m3u8", playlists.MasterPlaylist.Streams[1].URI)
 		require.Len(t, playlists.MediaPlaylists, 3)
 
 		mp0 := playlists.MediaPlaylists["media_0.m3u8"]
@@ -172,9 +176,9 @@ func TestHLSPlaylistDownloader(t *testing.T) {
 		require.Len(t, mp0.Segments, 2)
 		require.Equal(t, "media_0_100.ts", mp0.Segments[0].URI)
 		require.Equal(t, "media_0_101.ts", mp0.Segments[1].URI)
-		require.Equal(t, uint32(1280000), mp0.VariantParams.Bandwidth)
-		require.Equal(t, uint32(1000000), mp0.VariantParams.AverageBandwidth)
-		require.Nil(t, mp0.Alternative)
+		require.Equal(t, "1280000", mp0.StreamInfAttrs["BANDWIDTH"])
+		require.Equal(t, "1000000", mp0.StreamInfAttrs["AVERAGE-BANDWIDTH"])
+		require.Nil(t, mp0.MediaAttrs)
 
 		mp1 := playlists.MediaPlaylists["media_1.m3u8"]
 		require.Equal(t, server.URL+"/media_1.m3u8", mp1.URL)
@@ -182,9 +186,9 @@ func TestHLSPlaylistDownloader(t *testing.T) {
 		require.Len(t, mp1.Segments, 2)
 		require.Equal(t, "media_1_100.ts", mp1.Segments[0].URI)
 		require.Equal(t, "media_1_101.ts", mp1.Segments[1].URI)
-		require.Equal(t, uint32(2560000), mp1.VariantParams.Bandwidth)
-		require.Equal(t, uint32(2000000), mp1.VariantParams.AverageBandwidth)
-		require.Nil(t, mp1.Alternative)
+		require.Equal(t, "2560000", mp1.StreamInfAttrs["BANDWIDTH"])
+		require.Equal(t, "2000000", mp1.StreamInfAttrs["AVERAGE-BANDWIDTH"])
+		require.Nil(t, mp1.MediaAttrs)
 
 		mp2 := playlists.MediaPlaylists["media_2.m3u8"]
 		require.Equal(t, server.URL+"/media_2.m3u8", mp2.URL)
@@ -192,8 +196,8 @@ func TestHLSPlaylistDownloader(t *testing.T) {
 		require.Len(t, mp2.Segments, 2)
 		require.Equal(t, "media_2_100.ts", mp2.Segments[0].URI)
 		require.Equal(t, "media_2_101.ts", mp2.Segments[1].URI)
-		require.Nil(t, mp2.VariantParams)
-		require.Equal(t, "audio", mp2.Alternative.GroupId)
+		require.Nil(t, mp2.StreamInfAttrs)
+		require.Equal(t, "audio", mp2.MediaAttrs.GroupID())
 	})
 
 	t.Run("single media playlist", func(t *testing.T) {
@@ -209,7 +213,7 @@ func TestHLSPlaylistDownloader(t *testing.T) {
 		require.Len(t, mp0.Segments, 2)
 		require.Equal(t, "media_0_100.ts", mp0.Segments[0].URI)
 		require.Equal(t, "media_0_101.ts", mp0.Segments[1].URI)
-		require.Nil(t, mp0.VariantParams)
-		require.Nil(t, mp0.Alternative)
+		require.Nil(t, mp0.StreamInfAttrs)
+		require.Nil(t, mp0.MediaAttrs)
 	})
 }

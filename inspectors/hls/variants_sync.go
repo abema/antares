@@ -41,7 +41,7 @@ type variantsSyncInspector struct {
 func (ins *variantsSyncInspector) Inspect(playlists *core.Playlists, _ core.SegmentStore) *core.Report {
 	type SequenceKey struct {
 		GroupID  string
-		Sequence uint64
+		Sequence int64
 	}
 	type SequenceValue struct {
 		MaxDuration float64
@@ -49,8 +49,8 @@ func (ins *variantsSyncInspector) Inspect(playlists *core.Playlists, _ core.Segm
 	}
 	sequenceMap := make(map[SequenceKey]SequenceValue)
 	type GroupValue struct {
-		MaxSequence uint64
-		MinSequence uint64
+		MaxSequence int64
+		MinSequence int64
 	}
 	groupMap := make(map[string]GroupValue)
 	for _, media := range playlists.MediaPlaylists {
@@ -62,30 +62,30 @@ func (ins *variantsSyncInspector) Inspect(playlists *core.Playlists, _ core.Segm
 			}
 		}
 		var groupID string
-		if media.Alternative != nil {
-			groupID = media.Alternative.GroupId
+		if media.MediaAttrs != nil {
+			groupID = media.MediaAttrs.GroupID()
 		}
 		for _, segment := range media.Segments {
 			skey := SequenceKey{
-				Sequence: segment.SeqId,
+				Sequence: segment.Sequence,
 				GroupID:  groupID,
 			}
 			sval := sequenceMap[skey]
-			if sval.MaxDuration == 0 || segment.Duration > sval.MaxDuration {
-				sval.MaxDuration = segment.Duration
+			if sval.MaxDuration == 0 || segment.Tags.ExtInfValue() > sval.MaxDuration {
+				sval.MaxDuration = segment.Tags.ExtInfValue()
 			}
-			if sval.MinDuration == 0 || segment.Duration < sval.MinDuration {
-				sval.MinDuration = segment.Duration
+			if sval.MinDuration == 0 || segment.Tags.ExtInfValue() < sval.MinDuration {
+				sval.MinDuration = segment.Tags.ExtInfValue()
 			}
 			sequenceMap[skey] = sval
 		}
 		latest := media.Segments[len(media.Segments)-1]
 		gval := groupMap[groupID]
-		if gval.MaxSequence == 0 || latest.SeqId > gval.MaxSequence {
-			gval.MaxSequence = latest.SeqId
+		if gval.MaxSequence == 0 || latest.Sequence > gval.MaxSequence {
+			gval.MaxSequence = latest.Sequence
 		}
-		if gval.MinSequence == 0 || latest.SeqId < gval.MinSequence {
-			gval.MinSequence = latest.SeqId
+		if gval.MinSequence == 0 || latest.Sequence < gval.MinSequence {
+			gval.MinSequence = latest.Sequence
 		}
 		groupMap[groupID] = gval
 	}
@@ -96,7 +96,7 @@ func (ins *variantsSyncInspector) Inspect(playlists *core.Playlists, _ core.Segm
 			maxDurDiff = durDiff
 		}
 	}
-	var maxSeqDiff uint64
+	var maxSeqDiff int64
 	for _, gval := range groupMap {
 		seqDiff := gval.MaxSequence - gval.MinSequence
 		if seqDiff > maxSeqDiff {
@@ -112,7 +112,7 @@ func (ins *variantsSyncInspector) Inspect(playlists *core.Playlists, _ core.Segm
 			Values:   values,
 		}
 	}
-	if ins.config.ErrorSequeceDiff != 0 && maxSeqDiff >= uint64(ins.config.ErrorSequeceDiff) {
+	if ins.config.ErrorSequeceDiff != 0 && maxSeqDiff >= int64(ins.config.ErrorSequeceDiff) {
 		return &core.Report{
 			Name:     "VariantsSyncInspector",
 			Severity: core.Error,
@@ -128,7 +128,7 @@ func (ins *variantsSyncInspector) Inspect(playlists *core.Playlists, _ core.Segm
 			Values:   values,
 		}
 	}
-	if ins.config.WarnSequeceDiff != 0 && maxSeqDiff >= uint64(ins.config.WarnSequeceDiff) {
+	if ins.config.WarnSequeceDiff != 0 && maxSeqDiff >= int64(ins.config.WarnSequeceDiff) {
 		return &core.Report{
 			Name:     "VariantsSyncInspector",
 			Severity: core.Warn,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/abema/antares/core"
 	"github.com/abema/antares/inspectors/internal"
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 )
 
 type SpeedInspectorConfig struct {
@@ -53,7 +53,7 @@ func (ins *speedInspector) Inspect(playlists *core.Playlists, segments core.Segm
 	var maxGapURL string
 	var values core.Values
 	for _, media := range playlists.MediaPlaylists {
-		if media.Closed {
+		if media.EndList {
 			continue
 		}
 		realTime := float64(media.Time.UnixNano()) / 1e9
@@ -76,18 +76,18 @@ func (ins *speedInspector) Inspect(playlists *core.Playlists, segments core.Segm
 		if lastTimePoint == nil {
 			meter.AddTimePoint(&internal.TimePoint{
 				RealTime:  realTime,
-				SegmentID: latest.SeqId,
+				SegmentID: latest.Sequence,
 			})
 			continue
 		}
 		// calculate accumulated video duration after previous latest segment
-		lastSeq := lastTimePoint.SegmentID.(uint64)
+		lastSeq := lastTimePoint.SegmentID.(int64)
 		dur := ins.duration(media.Segments, lastSeq+1)
 		// add current time point
 		meter.AddTimePoint(&internal.TimePoint{
 			RealTime:  realTime,
 			VideoTime: lastTimePoint.VideoTime + dur,
-			SegmentID: latest.SeqId,
+			SegmentID: latest.Sequence,
 		})
 		if !meter.Satisfied() {
 			continue
@@ -130,11 +130,11 @@ func (ins *speedInspector) Inspect(playlists *core.Playlists, segments core.Segm
 	}
 }
 
-func (ins *speedInspector) duration(segments []*m3u8.MediaSegment, begin uint64) float64 {
+func (ins *speedInspector) duration(segments []*m3u8.Segment, begin int64) float64 {
 	var dur float64
 	for _, seg := range segments {
-		if seg.SeqId >= begin {
-			dur += seg.Duration
+		if seg.Sequence >= begin {
+			dur += seg.Tags.ExtInfValue()
 		}
 	}
 	return dur

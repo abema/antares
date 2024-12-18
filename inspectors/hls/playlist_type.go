@@ -2,7 +2,7 @@ package hls
 
 import (
 	"github.com/abema/antares/core"
-	"github.com/grafov/m3u8"
+	m3u8 "github.com/abema/go-simple-m3u8"
 )
 
 type PlaylistTypeCondition int
@@ -46,15 +46,15 @@ func (ins *playlistTypeInspector) Inspect(playlists *core.Playlists, segments co
 	var endlist bool
 	var noEndlist bool
 	for _, media := range playlists.MediaPlaylists {
-		switch media.MediaType {
-		case 0:
+		switch media.Tags.PlaylistType() {
+		case "":
 			noType = true
-		case m3u8.EVENT:
+		case m3u8.MediaPlaylistTypeEvent:
 			event = true
-		case m3u8.VOD:
+		case m3u8.MediaPlaylistTypeVOD:
 			vod = true
 		}
-		if media.Closed {
+		if media.EndList {
 			endlist = true
 		} else {
 			noEndlist = true
