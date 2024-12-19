@@ -3,7 +3,7 @@ package hls
 import (
 	"time"
 
-	"github.com/abema/antares/core"
+	"github.com/abema/antares/v2/core"
 )
 
 type VariantsSyncInspectorConfig struct {

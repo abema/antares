@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abema/antares/core"
+	"github.com/abema/antares/v2/core"
 	"github.com/stretchr/testify/require"
 )
 

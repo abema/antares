@@ -3,8 +3,8 @@ package dash
 import (
 	"fmt"
 
-	"github.com/abema/antares/core"
-	"github.com/abema/antares/internal/strings"
+	"github.com/abema/antares/v2/core"
+	"github.com/abema/antares/v2/internal/strings"
 )
 
 type AdaptationSetInspectorConfig struct {

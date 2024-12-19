@@ -1,4 +1,4 @@
-module github.com/abema/antares
+module github.com/abema/antares/v2
 
 go 1.21
 

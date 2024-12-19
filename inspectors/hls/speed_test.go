@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abema/antares/core"
+	"github.com/abema/antares/v2/core"
 	m3u8 "github.com/abema/go-simple-m3u8"
 	"github.com/stretchr/testify/require"
 )

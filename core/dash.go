@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abema/antares/internal/url"
+	"github.com/abema/antares/v2/internal/url"
 	"github.com/zencoder/go-dash/mpd"
 )
 

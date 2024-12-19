@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abema/antares/internal/thread"
+	"github.com/abema/antares/v2/internal/thread"
 	m3u8 "github.com/abema/go-simple-m3u8"
 	"golang.org/x/sync/errgroup"
 )

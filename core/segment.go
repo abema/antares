@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/abema/antares/internal/thread"
+	"github.com/abema/antares/v2/internal/thread"
 	backoff "github.com/cenkalti/backoff/v4"
 	"golang.org/x/sync/errgroup"
 )

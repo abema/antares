@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abema/antares/core"
+	"github.com/abema/antares/v2/core"
 	"github.com/zencoder/go-dash/mpd"
 )
 

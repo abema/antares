@@ -13,11 +13,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/abema/antares/adapters"
-	"github.com/abema/antares/core"
-	"github.com/abema/antares/inspectors/dash"
-	"github.com/abema/antares/inspectors/hls"
-	"github.com/abema/antares/internal/url"
+	"github.com/abema/antares/v2/adapters"
+	"github.com/abema/antares/v2/core"
+	"github.com/abema/antares/v2/inspectors/dash"
+	"github.com/abema/antares/v2/inspectors/hls"
+	"github.com/abema/antares/v2/internal/url"
 )
 
 var opts struct {

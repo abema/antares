@@ -3,7 +3,7 @@ package manager
 import (
 	"sync"
 
-	"github.com/abema/antares/core"
+	"github.com/abema/antares/v2/core"
 )
 
 type Config struct {

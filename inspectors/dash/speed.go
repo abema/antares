@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/abema/antares/core"
-	"github.com/abema/antares/inspectors/internal"
+	"github.com/abema/antares/v2/core"
+	"github.com/abema/antares/v2/inspectors/internal"
 )
 
 type SpeedInspectorConfig struct {
