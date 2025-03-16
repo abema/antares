@@ -187,10 +187,7 @@ func ResolveTemplate(format string, params TemplateParams) string {
 		} else if strings.HasPrefix(s, "Time%") {
 			ret += fmt.Sprintf(s[4:], params.Time)
 		} else {
-			ret += "$" + s
-			if i == len(ss)-1 {
-				ret += "$"
-			}
+			ret += "$" + s + "$"
 		}
 	}
 	return ret

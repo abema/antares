@@ -145,6 +145,9 @@ func TestResolveTemplate(t *testing.T) {
 	assert.Equal(t, ResolveTemplate("media/$Bandwidth$/$Time$.mp4", params), "media/1200000/3723720.mp4")
 	assert.Equal(t, ResolveTemplate("media/$RepresentationID$/$Number%05d$.mp4", params), "media/r0/00031.mp4")
 	assert.Equal(t, ResolveTemplate("media/$Bandwidth%08d$/$Time%09d$.mp4", params), "media/01200000/003723720.mp4")
+	assert.Equal(t, ResolveTemplate("media/$$/$Time$.mp4", params), "media/$/3723720.mp4")
+	assert.Equal(t, ResolveTemplate("media/$Unknown$/$Time$.mp4", params), "media/$Unknown$/3723720.mp4")
+	assert.Equal(t, ResolveTemplate("media/$Time$.$Unknown$", params), "media/3723720.$Unknown$")
 }
 
 func TestDASHManifestDownloader(t *testing.T) {
