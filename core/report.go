@@ -81,7 +81,7 @@ func BestSeverity(ss ...Severity) Severity {
 	return best
 }
 
-type Values map[string]interface{}
+type Values map[string]any
 
 func (values Values) Keys() []string {
 	keys := make([]string, 0, len(values))
