@@ -133,6 +133,20 @@ func TestSegments(t *testing.T) {
 	})
 }
 
+func TestResolveTemplate(t *testing.T) {
+	params := TemplateParams{
+		RepresentationID: "r0",
+		Number:           31,
+		Bandwidth:        1200000,
+		Time:             3723720,
+	}
+	assert.Equal(t, ResolveTemplate("media.mp4", params), "media.mp4")
+	assert.Equal(t, ResolveTemplate("media/$RepresentationID$/$Number$.mp4", params), "media/r0/31.mp4")
+	assert.Equal(t, ResolveTemplate("media/$Bandwidth$/$Time$.mp4", params), "media/1200000/3723720.mp4")
+	assert.Equal(t, ResolveTemplate("media/$RepresentationID$/$Number%05d$.mp4", params), "media/r0/00031.mp4")
+	assert.Equal(t, ResolveTemplate("media/$Bandwidth%08d$/$Time%09d$.mp4", params), "media/01200000/003723720.mp4")
+}
+
 func TestDASHManifestDownloader(t *testing.T) {
 	manifest := []byte(`<MPD type="dynamic" minimumUpdatePeriod="PT5.000000S" availabilityStartTime="1970-01-01T00:00:00Z">` +
 		`<Period id="1" start="PT1600000000.000S">` +
