@@ -130,7 +130,7 @@ Identifiers for URL templates:
 - [x] $Bandwidth$
 - [x] $Time$
 - [ ] $SubNumber$
-- [ ] IEEE 1003.1 Format Tag
+- [x] IEEE 1003.1 Format Tag
 
 ## License
 

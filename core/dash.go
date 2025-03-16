@@ -180,6 +180,12 @@ func ResolveTemplate(format string, params TemplateParams) string {
 			ret += strconv.FormatInt(params.Bandwidth, 10)
 		} else if s == "Time" {
 			ret += strconv.FormatUint(params.Time, 10)
+		} else if strings.HasPrefix(s, "Number%") {
+			ret += fmt.Sprintf(s[6:], params.Number)
+		} else if strings.HasPrefix(s, "Bandwidth%") {
+			ret += fmt.Sprintf(s[9:], params.Bandwidth)
+		} else if strings.HasPrefix(s, "Time%") {
+			ret += fmt.Sprintf(s[4:], params.Time)
 		} else {
 			ret += "$" + s
 			if i == len(ss)-1 {
