@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -60,7 +60,7 @@ func (c *simpleClient) Get(ctx context.Context, url string) ([]byte, string, err
 		if c.bare.CheckRedirect != nil {
 			return c.bare.CheckRedirect(req, via)
 		}
-		if len(via) >= 10 {
+		if len(via) >= maxRedirectCount {
 			return errors.New("stopped after 10 redirects")
 		}
 		return nil
@@ -71,11 +71,11 @@ func (c *simpleClient) Get(ctx context.Context, url string) ([]byte, string, err
 	if err != nil {
 		return nil, "", err
 	}
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, "", err
 	}
-	elapsed := time.Now().Sub(requestTime)
+	elapsed := time.Since(requestTime)
 	if c.handler != nil {
 		c.handler(&File{
 			Meta: Meta{
