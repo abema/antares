@@ -49,7 +49,15 @@ func (m *Manifest) EachSegments(handle func(*DASHSegment) (cont bool)) error {
 				return err
 			}
 		}
+		var segmentTemplate mpd.SegmentTemplate
+		if period.SegmentTemplate != nil {
+			mergeSegmentTemplate(&segmentTemplate, period.SegmentTemplate)
+		}
 		for _, as := range period.AdaptationSets {
+			segmentTemplate := segmentTemplate
+			if as.SegmentTemplate != nil {
+				mergeSegmentTemplate(&segmentTemplate, as.SegmentTemplate)
+			}
 			for _, rep := range as.Representations {
 				baseURL := baseURL
 				if rep.BaseURL != nil {
@@ -58,16 +66,13 @@ func (m *Manifest) EachSegments(handle func(*DASHSegment) (cont bool)) error {
 						return err
 					}
 				}
-				if as.SegmentTemplate != nil {
-					cont, err := visitSegmentsBySegmentTimeline(baseURL, as.SegmentTemplate, period, as, rep, handle)
-					if err != nil || !cont {
-						return err
-					}
-				} else if rep.SegmentTemplate != nil {
-					cont, err := visitSegmentsBySegmentTimeline(baseURL, rep.SegmentTemplate, period, as, rep, handle)
-					if err != nil || !cont {
-						return err
-					}
+				segmentTemplate := segmentTemplate
+				if rep.SegmentTemplate != nil {
+					mergeSegmentTemplate(&segmentTemplate, rep.SegmentTemplate)
+				}
+				cont, err := visitSegmentsBySegmentTimeline(baseURL, &segmentTemplate, period, as, rep, handle)
+				if err != nil || !cont {
+					return err
 				}
 			}
 		}
@@ -236,4 +241,28 @@ func (d *dashManifestDownloader) Download(ctx context.Context, u string) (*Manif
 		Time: time.Now(),
 		MPD:  m,
 	}, nil
+}
+
+func mergeSegmentTemplate(base, child *mpd.SegmentTemplate) {
+	if child.SegmentTimeline != nil {
+		base.SegmentTimeline = child.SegmentTimeline
+	}
+	if child.PresentationTimeOffset != nil {
+		base.PresentationTimeOffset = child.PresentationTimeOffset
+	}
+	if child.Duration != nil {
+		base.Duration = child.Duration
+	}
+	if child.Initialization != nil {
+		base.Initialization = child.Initialization
+	}
+	if child.Media != nil {
+		base.Media = child.Media
+	}
+	if child.StartNumber != nil {
+		base.StartNumber = child.StartNumber
+	}
+	if child.Timescale != nil {
+		base.Timescale = child.Timescale
+	}
 }
