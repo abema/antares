@@ -77,12 +77,15 @@ func TestSegments(t *testing.T) {
 				BaseURL: "./bar/",
 				Periods: []*mpd.Period{
 					{
+						SegmentTemplate: &mpd.SegmentTemplate{StartNumber: ptrs.Int64ptr(1), Timescale: ptrs.Int64ptr(90000)},
 						AdaptationSets: []*mpd.AdaptationSet{
 							{
+								SegmentTemplate: &mpd.SegmentTemplate{StartNumber: ptrs.Int64ptr(1), Timescale: ptrs.Int64ptr(30000)},
 								Representations: []*mpd.Representation{
 									{
 										ID: ptrs.Strptr("r0"),
 										SegmentTemplate: &mpd.SegmentTemplate{
+											StartNumber:    ptrs.Int64ptr(100),
 											Initialization: ptrs.Strptr("$RepresentationID$/init.mp4"),
 											Media:          ptrs.Strptr("$RepresentationID$/$Time$.mp4"),
 											SegmentTimeline: &mpd.SegmentTimeline{
@@ -95,6 +98,7 @@ func TestSegments(t *testing.T) {
 									{
 										ID: ptrs.Strptr("r1"),
 										SegmentTemplate: &mpd.SegmentTemplate{
+											StartNumber:    ptrs.Int64ptr(100),
 											Initialization: ptrs.Strptr("$RepresentationID$/init.mp4"),
 											Media:          ptrs.Strptr("$RepresentationID$/$Time$.mp4"),
 											SegmentTimeline: &mpd.SegmentTimeline{
@@ -120,6 +124,8 @@ func TestSegments(t *testing.T) {
 
 		assert.Equal(t, "https://localhost/foo/bar/r0/1000000.mp4", segments[1].URL)
 		assert.False(t, segments[1].Initialization)
+		assert.Equal(t, int64(100), *segments[1].SegmentTemplate.StartNumber)
+		assert.Equal(t, int64(30000), *segments[1].SegmentTemplate.Timescale)
 		assert.Equal(t, uint64(1000000), segments[1].Time)
 		assert.Equal(t, uint64(90000), segments[1].Duration)
 
@@ -128,6 +134,8 @@ func TestSegments(t *testing.T) {
 
 		assert.Equal(t, "https://localhost/foo/bar/r1/1000000.mp4", segments[5].URL)
 		assert.False(t, segments[5].Initialization)
+		assert.Equal(t, int64(100), *segments[5].SegmentTemplate.StartNumber)
+		assert.Equal(t, int64(30000), *segments[5].SegmentTemplate.Timescale)
 		assert.Equal(t, uint64(1000000), segments[5].Time)
 		assert.Equal(t, uint64(90000), segments[5].Duration)
 	})
