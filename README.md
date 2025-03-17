@@ -18,7 +18,7 @@ You can use prepared command or Go interfaces.
 ### Install
 
 ```sh
-go install github.com/abema/antares@latest
+go install github.com/abema/antares/v2@latest
 ```
 
 ### Example
