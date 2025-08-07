@@ -105,6 +105,7 @@ config.OnReport = core.MergeOnReportHandlers(
 - [x] Event
 - [x] On-demand
 - [ ] Byte range
+- [ ] #EXT-X-MAP
 - [ ] LHLS
 - [ ] Decryption
 - [ ] I-frame-only playlists
