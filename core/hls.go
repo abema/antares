@@ -157,8 +157,13 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 	}
 	var mutex sync.Mutex
 	eg := new(errgroup.Group)
+	downloadedURIs := make(map[string]bool)
 	for vi := range d.masterPlaylist.Streams {
 		variant := d.masterPlaylist.Streams[vi]
+		if downloadedURIs[variant.URI] {
+			continue
+		}
+		downloadedURIs[variant.URI] = true
 		eg.Go(thread.NoPanic(func() error {
 			mediaPlaylist, err := d.downloadMediaPlaylist(ctx, base, variant.URI, variant.Attributes, nil)
 			if err != nil {
@@ -187,8 +192,12 @@ func (d *hlsPlaylistDownloader) Download(ctx context.Context, u string) (*Playli
 		}
 	}
 	for _, alt := range alternatives {
+		uri := alt.URI()
+		if downloadedURIs[uri] {
+			continue
+		}
+		downloadedURIs[uri] = true
 		eg.Go(thread.NoPanic(func() error {
-			uri := alt.URI()
 			mediaPlaylist, err := d.downloadMediaPlaylist(ctx, base, uri, nil, alt)
 			if err != nil {
 				return err

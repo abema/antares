@@ -200,6 +200,33 @@ func TestHLSPlaylistDownloader(t *testing.T) {
 		require.Equal(t, "audio", mp2.MediaAttrs.GroupID())
 	})
 
+	t.Run("duplicate stream uri", func(t *testing.T) {
+		dupMaster := []byte(`#EXTM3U` + "\n" +
+			`#EXT-X-STREAM-INF:BANDWIDTH=1280000` + "\n" +
+			`media_0.m3u8` + "\n" +
+			`#EXT-X-STREAM-INF:BANDWIDTH=2560000` + "\n" +
+			`media_0.m3u8` + "\n")
+		var requestCount int
+		dupServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/master.m3u8":
+				w.Write(dupMaster)
+			case "/media_0.m3u8":
+				requestCount++
+				w.Write(media0)
+			default:
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}))
+		defer dupServer.Close()
+
+		d := newHLSPlaylistDownloader(newClient(http.DefaultClient, nil, nil), time.Second)
+		playlists, err := d.Download(context.Background(), dupServer.URL+"/master.m3u8")
+		require.NoError(t, err)
+		require.Len(t, playlists.MediaPlaylists, 1)
+		require.Equal(t, 1, requestCount, "duplicate URI should be downloaded only once")
+	})
+
 	t.Run("single media playlist", func(t *testing.T) {
 		d := newHLSPlaylistDownloader(newClient(http.DefaultClient, nil, nil), time.Second)
 		playlists, err := d.Download(context.Background(), server.URL+"/media_0.m3u8")
