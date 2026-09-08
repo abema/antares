@@ -298,13 +298,6 @@ func buildRequestHeader() http.Header {
 	}
 }
 
-func printUsage() {
-	println("USAGE: antares monitor [OPTIONS] URL")
-	println()
-	println("OPTIONS:")
-	flagSet.PrintDefaults()
-}
-
 func invalidArguments(format string, args ...interface{}) {
 	println("ERROR: invalid arguments:", fmt.Sprintf(format, args...))
 	println()
